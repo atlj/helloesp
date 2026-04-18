@@ -1,3 +1,9 @@
+//! Minimal LCD support for the ESP323248S035 board.
+//!
+//! This module is intentionally board-specific. It assumes the display wiring
+//! and backlight setup described in `docs/hardware-slop.md` and exposes a small
+//! API for panel init, brightness control, and simple solid-color drawing.
+
 use embassy_time::{Duration, Timer};
 use esp_hal::Blocking;
 use esp_hal::gpio::{DriveMode, Level, Output, OutputConfig};
@@ -9,6 +15,7 @@ use esp_hal::spi::Error as SpiError;
 use esp_hal::spi::master::Spi;
 use esp_hal::time::Rate;
 use static_cell::StaticCell;
+use thiserror::Error as ThisError;
 
 mod command {
     pub const SWRESET: u8 = 0x01;
@@ -37,16 +44,27 @@ const NEGATIVE_GAMMA: [u8; 14] = [
 ];
 const BACKLIGHT_PWM_FREQUENCY_HZ: u32 = 5_000;
 
+/// Blocking SPI type used for panel transfers.
 pub type ScreenSpi = Spi<'static, Blocking>;
 
 static BACKLIGHT_TIMER: StaticCell<timer::Timer<'static, LowSpeed>> = StaticCell::new();
 
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, ThisError)]
 pub enum Error {
+    /// An SPI transaction with the panel failed.
+    #[error("panel SPI transfer failed: {0:?}")]
     Spi(SpiError),
+    /// LEDC timer setup for the backlight failed.
+    #[error("backlight timer configuration failed: {0:?}")]
     BacklightTimer(timer::Error),
+    /// LEDC channel setup for the backlight failed.
+    #[error("backlight channel configuration failed: {0:?}")]
     BacklightChannel(channel::Error),
+    /// A rectangle with zero width or height was requested.
+    #[error("rectangle width and height must be non-zero")]
     EmptyRect,
+    /// Rectangle end coordinates overflowed `u16`.
+    #[error("rectangle coordinates overflowed panel address range")]
     CoordinatesOutOfRange,
 }
 
@@ -68,6 +86,7 @@ impl From<channel::Error> for Error {
     }
 }
 
+/// Minimal LCD driver for this board's display and PWM backlight.
 pub struct Lcd {
     spi: ScreenSpi,
     dc: Output<'static>,
@@ -77,6 +96,11 @@ pub struct Lcd {
 }
 
 impl Lcd {
+    /// Creates the LCD driver using this board's fixed DC, CS, and backlight
+    /// pins.
+    ///
+    /// The backlight is configured as 5 kHz, 8-bit PWM to match the hardware
+    /// notes.
     pub fn new(
         spi: ScreenSpi,
         ledc: LEDC<'static>,
@@ -112,6 +136,7 @@ impl Lcd {
         })
     }
 
+    /// Runs the panel initialization sequence for the ST7796-compatible display.
     pub async fn init(&mut self) -> Result<(), Error> {
         self.write_command(command::SWRESET, None)?;
         Timer::after(Duration::from_millis(100)).await;
@@ -134,10 +159,12 @@ impl Lcd {
         Ok(())
     }
 
+    /// Sets backlight duty in the board's native `0..=255` range.
     pub fn set_brightness(&mut self, level: u8) {
         self.backlight.set_duty_hw(level.into());
     }
 
+    /// Fills a rectangle with a solid RGB565 color.
     pub fn fill_rect(
         &mut self,
         x: u16,
