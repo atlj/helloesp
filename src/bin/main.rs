@@ -11,7 +11,11 @@ use embassy_executor::Spawner;
 use embassy_time::{Duration, Timer};
 use esp_backtrace as _;
 use esp_hal::clock::CpuClock;
+use esp_hal::spi::Mode;
+use esp_hal::spi::master::Config;
+use esp_hal::time::Rate;
 use esp_hal::timer::timg::TimerGroup;
+use helloesp::lcd::Lcd;
 use log::info;
 
 extern crate alloc;
@@ -33,10 +37,33 @@ async fn main(spawner: Spawner) -> ! {
     let config = esp_hal::Config::default().with_cpu_clock(CpuClock::max());
     let peripherals = esp_hal::init(config);
 
+    let spi_config = Config::default()
+        .with_mode(Mode::_0)
+        .with_write_bit_order(esp_hal::spi::BitOrder::MsbFirst)
+        .with_frequency(Rate::from_hz(80_000_000));
+    let screen_spi = esp_hal::spi::master::Spi::new(peripherals.SPI2, spi_config)
+        .unwrap()
+        .with_mosi(peripherals.GPIO13)
+        .with_miso(peripherals.GPIO12)
+        .with_sck(peripherals.GPIO14);
+
+    let mut lcd = Lcd::new(
+        screen_spi,
+        peripherals.LEDC,
+        peripherals.GPIO2,
+        peripherals.GPIO15,
+        peripherals.GPIO27,
+    )
+    .unwrap();
+
     esp_alloc::heap_allocator!(#[esp_hal::ram(reclaimed)] size: 98768);
 
     let timg0 = TimerGroup::new(peripherals.TIMG0);
     esp_rtos::start(timg0.timer0);
+
+    lcd.init().await.unwrap();
+    lcd.set_brightness(10);
+    lcd.fill_rect(0, 0, 10, 10, 0xF800).unwrap();
 
     info!("Embassy initialized!");
 
