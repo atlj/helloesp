@@ -1,4 +1,6 @@
 #![no_std]
+#![feature(const_option_ops)]
+#![feature(const_trait_impl)]
 
 pub mod color;
 pub mod geometry;

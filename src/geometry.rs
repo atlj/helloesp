@@ -1,4 +1,4 @@
-use core::marker::PhantomData;
+use core::{marker::PhantomData, ops::Div};
 
 use crate::geometry::validity::{Unchecked, Valid};
 
@@ -42,11 +42,36 @@ pub struct Size2<Validity> {
     validity: PhantomData<Validity>,
 }
 
+impl<T> Div<u8> for Size2<T> {
+    type Output = Size2<T>;
+
+    fn div(self, rhs: u8) -> Self::Output {
+        let Size2 { width, height, .. } = self;
+
+        Size2 {
+            width: width / rhs as u16,
+            height: height / rhs as u16,
+            validity: PhantomData,
+        }
+    }
+}
+
 impl<T> Size2<T> {
     pub const fn new(width: u16, height: u16) -> Size2<Unchecked> {
         Size2 {
             width,
             height,
+            validity: PhantomData,
+        }
+    }
+
+    pub const fn center_position(&self) -> Position2<T> {
+        let x = self.width / 2;
+        let y = self.height / 2;
+
+        Position2 {
+            x,
+            y,
             validity: PhantomData,
         }
     }
@@ -63,6 +88,8 @@ impl Size2<Unchecked> {
 }
 
 pub mod validity {
+    #[derive(Debug)]
     pub struct Valid;
+    #[derive(Debug)]
     pub struct Unchecked;
 }
