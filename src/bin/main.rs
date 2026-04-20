@@ -70,7 +70,7 @@ async fn main(spawner: Spawner) -> ! {
     let pos = Position2::<Valid>::UPPER_LEFT;
     let size = Lcd::SIZE;
 
-    lcd.fill_valid(pos, size, Color(u16::MAX)).unwrap();
+    lcd.fill(pos, size, Color(u16::MAX)).unwrap();
 
     info!("Embassy initialized!");
 

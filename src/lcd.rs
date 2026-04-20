@@ -113,7 +113,7 @@ impl screen::Screen for Lcd {
         self.brightness
     }
 
-    fn draw_valid(
+    fn draw(
         &mut self,
         command: screen::DrawCommand<crate::geometry::validity::Valid>,
     ) -> Result<(), Self::Error> {
@@ -146,7 +146,7 @@ impl screen::Screen for Lcd {
                     None => {
                         if !did_log_underflow {
                             log::error!(
-                                "draw_valid color_data ended early; padding remaining pixels with Color(0)"
+                                "draw color_data ended early; padding remaining pixels with Color(0)"
                             );
                             did_log_underflow = true;
                         }

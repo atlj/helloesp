@@ -38,9 +38,9 @@ pub trait Screen {
 
     fn get_brightness(&self) -> u8;
 
-    fn draw_valid(&mut self, command: DrawCommand<Valid>) -> Result<(), Self::Error>;
+    fn draw(&mut self, command: DrawCommand<Valid>) -> Result<(), Self::Error>;
 
-    fn fill_valid(
+    fn fill(
         &mut self,
         at: Position2<Valid>,
         size: Size2<Valid>,
@@ -56,7 +56,7 @@ pub trait Screen {
             validity: PhantomData,
         };
 
-        self.draw_valid(command)
+        self.draw(command)
     }
 
     fn validate_draw_command(
