@@ -15,7 +15,11 @@ use esp_hal::spi::Mode;
 use esp_hal::spi::master::Config;
 use esp_hal::time::Rate;
 use esp_hal::timer::timg::TimerGroup;
+use helloesp::color::Color;
+use helloesp::geometry::Position2;
+use helloesp::geometry::validity::Valid;
 use helloesp::lcd::Lcd;
+use helloesp::screen::Screen;
 use log::info;
 
 extern crate alloc;
@@ -62,8 +66,11 @@ async fn main(spawner: Spawner) -> ! {
     esp_rtos::start(timg0.timer0);
 
     lcd.init().await.unwrap();
-    lcd.set_brightness(255);
-    lcd.fill_rect(0, 0, 480, 320, 0xF800).unwrap();
+    lcd.set_brightness(128);
+    let pos = Position2::<Valid>::UPPER_LEFT;
+    let size = Lcd::SIZE;
+
+    lcd.fill_valid(pos, size, Color(u16::MAX)).unwrap();
 
     info!("Embassy initialized!");
 

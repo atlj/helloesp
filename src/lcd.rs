@@ -4,6 +4,7 @@
 //! and backlight setup described in `docs/hardware-slop.md` and exposes a small
 //! API for panel init, brightness control, and simple solid-color drawing.
 
+use byte_slice_cast::AsByteSlice;
 use embassy_time::{Duration, Timer};
 use esp_hal::Blocking;
 use esp_hal::gpio::{DriveMode, Level, Output, OutputConfig};
@@ -16,6 +17,9 @@ use esp_hal::spi::master::Spi;
 use esp_hal::time::Rate;
 use static_cell::StaticCell;
 use thiserror::Error as ThisError;
+
+use crate::geometry::validity::{Unchecked, Valid};
+use crate::screen;
 
 mod command {
     pub const SWRESET: u8 = 0x01;
@@ -63,9 +67,6 @@ pub enum Error {
     /// A rectangle with zero width or height was requested.
     #[error("rectangle width and height must be non-zero")]
     EmptyRect,
-    /// Rectangle end coordinates overflowed `u16`.
-    #[error("rectangle coordinates overflowed panel address range")]
-    CoordinatesOutOfRange,
 }
 
 impl From<SpiError> for Error {
@@ -93,6 +94,76 @@ pub struct Lcd {
     cs: Output<'static>,
     _ledc: Ledc<'static>,
     backlight: channel::Channel<'static, LowSpeed>,
+    brightness: u8,
+}
+
+impl screen::Screen for Lcd {
+    type Error = Error;
+
+    const SIZE: crate::geometry::Size2<Valid> =
+        crate::geometry::Size2::<Unchecked>::new(480, 320).unchecked_validate();
+
+    /// Brightness goes from 0 (minimum) to 255 (maximum).
+    fn set_brightness(&mut self, brightness: u8) {
+        self.brightness = brightness;
+        self.backlight.set_duty_hw(brightness.into());
+    }
+
+    fn get_brightness(&self) -> u8 {
+        self.brightness
+    }
+
+    fn draw_valid(
+        &mut self,
+        command: screen::DrawCommand<crate::geometry::validity::Valid>,
+    ) -> Result<(), Self::Error> {
+        let screen::DrawCommand {
+            at,
+            size,
+            color_data,
+            ..
+        } = command;
+
+        self.set_window(at.x, at.y, at.x + size.width - 1, at.y + size.height - 1)?;
+
+        self.cs.set_low();
+
+        self.dc.set_low();
+        self.spi.write(&[command::RAMWR])?;
+
+        self.dc.set_high();
+
+        let mut remaining = usize::from(size.width) * usize::from(size.height);
+        let mut sink = [0u16; 64];
+        let mut did_log_underflow = false;
+
+        while remaining > 0 {
+            let chunk_len = sink.len().min(remaining);
+
+            for item in sink.iter_mut().take(chunk_len) {
+                *item = match color_data.next() {
+                    Some(color) => color.0,
+                    None => {
+                        if !did_log_underflow {
+                            log::error!(
+                                "draw_valid color_data ended early; padding remaining pixels with Color(0)"
+                            );
+                            did_log_underflow = true;
+                        }
+
+                        0
+                    }
+                };
+            }
+
+            self.spi.write(sink[..chunk_len].as_byte_slice())?;
+            remaining -= chunk_len;
+        }
+
+        self.cs.set_high();
+
+        Ok(())
+    }
 }
 
 impl Lcd {
@@ -133,6 +204,7 @@ impl Lcd {
             cs: Output::new(cs, Level::High, OutputConfig::default()),
             _ledc: ledc,
             backlight,
+            brightness: 128,
         })
     }
 
@@ -159,51 +231,6 @@ impl Lcd {
         Ok(())
     }
 
-    /// Sets backlight duty in the board's native `0..=255` range.
-    pub fn set_brightness(&mut self, level: u8) {
-        self.backlight.set_duty_hw(level.into());
-    }
-
-    /// Fills a rectangle with a solid RGB565 color.
-    pub fn fill_rect(
-        &mut self,
-        x: u16,
-        y: u16,
-        width: u16,
-        height: u16,
-        color: u16,
-    ) -> Result<(), Error> {
-        if width == 0 || height == 0 {
-            return Err(Error::EmptyRect);
-        }
-
-        let x1 = x
-            .checked_add(width - 1)
-            .ok_or(Error::CoordinatesOutOfRange)?;
-        let y1 = y
-            .checked_add(height - 1)
-            .ok_or(Error::CoordinatesOutOfRange)?;
-
-        self.set_window(x, y, x1, y1)?;
-        self.write_repeated_color(color, width as usize * height as usize)?;
-
-        Ok(())
-    }
-
-    fn write_command(&mut self, command: u8, data: Option<&[u8]>) -> Result<(), Error> {
-        self.cs.set_low();
-        self.dc.set_low();
-        self.spi.write(&[command])?;
-
-        if let Some(data) = data {
-            self.dc.set_high();
-            self.spi.write(data)?;
-        }
-
-        self.cs.set_high();
-        Ok(())
-    }
-
     fn set_window(&mut self, x0: u16, y0: u16, x1: u16, y1: u16) -> Result<(), Error> {
         let [x0_hi, x0_lo] = x0.to_be_bytes();
         let [x1_hi, x1_lo] = x1.to_be_bytes();
@@ -216,24 +243,14 @@ impl Lcd {
         Ok(())
     }
 
-    fn write_repeated_color(&mut self, color: u16, pixel_count: usize) -> Result<(), Error> {
-        let color = color.to_be_bytes();
-        let mut burst = [0_u8; 64];
-        for pixel in burst.chunks_exact_mut(2) {
-            pixel.copy_from_slice(&color);
-        }
-
+    fn write_command(&mut self, command: u8, data: Option<&[u8]>) -> Result<(), Error> {
         self.cs.set_low();
         self.dc.set_low();
-        self.spi.write(&[command::RAMWR])?;
-        self.dc.set_high();
+        self.spi.write(&[command])?;
 
-        let mut remaining = pixel_count;
-        let burst_pixels = burst.len() / 2;
-        while remaining != 0 {
-            let chunk_pixels = remaining.min(burst_pixels);
-            self.spi.write(&burst[..chunk_pixels * 2])?;
-            remaining -= chunk_pixels;
+        if let Some(data) = data {
+            self.dc.set_high();
+            self.spi.write(data)?;
         }
 
         self.cs.set_high();
