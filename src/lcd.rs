@@ -134,7 +134,7 @@ impl screen::Screen for Lcd {
         self.dc.set_high();
 
         let mut remaining = usize::from(size.width) * usize::from(size.height);
-        let mut sink = [0u16; 64];
+        let mut sink = [0u16; 8192];
         let mut did_log_underflow = false;
 
         while remaining > 0 {
