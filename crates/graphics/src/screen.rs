@@ -91,14 +91,8 @@ pub trait Screen {
             return None;
         }
 
-        let Some(remaining_width) = Self::SIZE.width.checked_sub(at.x) else {
-            return None;
-        };
-
-        let Some(remaining_height) = Self::SIZE.height.checked_sub(at.y) else {
-            return None;
-        };
-
+        let remaining_width = Self::SIZE.width.checked_sub(at.x)?;
+        let remaining_height = Self::SIZE.height.checked_sub(at.y)?;
         if size.width > remaining_width || size.height > remaining_height {
             return None;
         }
