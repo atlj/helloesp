@@ -26,7 +26,11 @@ impl<T> Position2<T> {
 }
 
 impl Position2<Unchecked> {
-    pub(crate) const fn unchecked_validate(self) -> Position2<Valid> {
+    /// Converts to `Valid` without checking bounds.
+    ///
+    /// # Safety
+    /// Caller must ensure the position lies within the target screen bounds.
+    pub const fn unchecked_validate(self) -> Position2<Valid> {
         Position2 {
             x: self.x,
             y: self.y,
@@ -78,7 +82,11 @@ impl<T> Size2<T> {
 }
 
 impl Size2<Unchecked> {
-    pub(crate) const fn unchecked_validate(self) -> Size2<Valid> {
+    /// Converts to `Valid` without checking bounds.
+    ///
+    /// # Safety
+    /// Caller must ensure the size fits within the target screen bounds.
+    pub const fn unchecked_validate(self) -> Size2<Valid> {
         Size2 {
             width: self.width,
             height: self.height,

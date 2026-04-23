@@ -7,6 +7,7 @@
 )]
 #![deny(clippy::large_stack_frames)]
 
+use color::Color;
 use embassy_executor::Spawner;
 use embassy_time::{Duration, Timer};
 use esp_backtrace as _;
@@ -15,11 +16,10 @@ use esp_hal::spi::Mode;
 use esp_hal::spi::master::Config;
 use esp_hal::time::Rate;
 use esp_hal::timer::timg::TimerGroup;
-use helloesp::color::Color;
-use helloesp::geometry::validity::Valid;
-use helloesp::geometry::{Position2, Size2};
-use helloesp::lcd::Lcd;
-use helloesp::screen::Screen;
+use graphics::Screen;
+use graphics::geometry::Position2;
+use graphics::geometry::validity::Valid;
+use hardware::lcd::Lcd;
 use log::info;
 
 extern crate alloc;

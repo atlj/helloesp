@@ -1,7 +1,7 @@
 use core::marker::PhantomData;
 
 use crate::{
-    color::Color,
+    Color,
     geometry::{
         Position2, Size2,
         validity::{Unchecked, Valid},

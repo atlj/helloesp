@@ -15,11 +15,11 @@ use esp_hal::peripherals::{GPIO2, GPIO15, GPIO27, LEDC};
 use esp_hal::spi::Error as SpiError;
 use esp_hal::spi::master::Spi;
 use esp_hal::time::Rate;
+use graphics::geometry::Size2;
+use graphics::geometry::validity::{Unchecked, Valid};
+use graphics::{DrawCommand, Screen};
 use static_cell::StaticCell;
 use thiserror::Error as ThisError;
-
-use crate::geometry::validity::{Unchecked, Valid};
-use crate::screen;
 
 mod command {
     pub const SWRESET: u8 = 0x01;
@@ -97,11 +97,10 @@ pub struct Lcd {
     brightness: u8,
 }
 
-impl screen::Screen for Lcd {
+impl Screen for Lcd {
     type Error = Error;
 
-    const SIZE: crate::geometry::Size2<Valid> =
-        crate::geometry::Size2::<Unchecked>::new(480, 320).unchecked_validate();
+    const SIZE: Size2<Valid> = Size2::<Unchecked>::new(480, 320).unchecked_validate();
 
     /// Brightness goes from 0 (minimum) to 255 (maximum).
     fn set_brightness(&mut self, brightness: u8) {
@@ -113,11 +112,8 @@ impl screen::Screen for Lcd {
         self.brightness
     }
 
-    fn draw(
-        &mut self,
-        command: screen::DrawCommand<crate::geometry::validity::Valid>,
-    ) -> Result<(), Self::Error> {
-        let screen::DrawCommand {
+    fn draw(&mut self, command: DrawCommand<Valid>) -> Result<(), Self::Error> {
+        let DrawCommand {
             at,
             size,
             color_data,

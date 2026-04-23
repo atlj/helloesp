@@ -1,0 +1,14 @@
+[package]
+name = "hardware"
+edition.workspace = true
+rust-version.workspace = true
+version.workspace = true
+
+[dependencies]
+byte-slice-cast.workspace = true
+embassy-time.workspace = true
+esp-hal.workspace = true
+graphics.workspace = true
+log.workspace = true
+static_cell.workspace = true
+thiserror.workspace = true

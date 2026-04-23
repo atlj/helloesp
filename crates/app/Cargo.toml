@@ -1,0 +1,25 @@
+[package]
+name = "app"
+build = "build.rs"
+edition.workspace = true
+rust-version.workspace = true
+version.workspace = true
+
+[[bin]]
+name = "helloesp"
+path = "src/main.rs"
+
+[dependencies]
+color.workspace = true
+critical-section.workspace = true
+embassy-executor.workspace = true
+embassy-time.workspace = true
+esp-alloc.workspace = true
+esp-backtrace.workspace = true
+esp-bootloader-esp-idf.workspace = true
+esp-hal.workspace = true
+esp-println.workspace = true
+esp-rtos.workspace = true
+graphics.workspace = true
+hardware.workspace = true
+log.workspace = true
