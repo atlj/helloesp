@@ -37,7 +37,7 @@ mod command {
     pub const CSCON: u8 = 0xF0;
 }
 
-const COLMOD_RGB565: u8 = 0x55;
+// const COLMOD_RGB565: u8 = 0x55;
 const COLMOD_RGB888: u8 = 0x67;
 const MADCTL_WIDE_INVERTED_RGB: u8 = 0xE0;
 
@@ -134,7 +134,7 @@ impl Screen for Lcd {
         self.dc.set_high();
 
         let mut remaining = usize::from(size.width) * usize::from(size.height);
-        let mut sink = [0u8; 66_000]; // 300 pixels × 3 bytes (RGB888)
+        let mut sink = [0u8; 66_000];
         let mut did_log_underflow = false;
 
         while remaining > 0 {

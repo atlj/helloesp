@@ -73,21 +73,6 @@ async fn main(spawner: Spawner) -> ! {
 
     lcd.fill(pos, size, color!(#FFFFFF)).unwrap();
 
-    let pos = Position2::<Valid>::UPPER_LEFT;
-    let size = Lcd::SIZE / 2;
-
-    lcd.fill(pos, size, color!(#FF0000)).unwrap();
-
-    let pos = Position2::<Valid>::UPPER_LEFT;
-    let size = Lcd::SIZE / 3;
-
-    lcd.fill(pos, size, color!(#00FF00)).unwrap();
-
-    let pos = Position2::<Valid>::UPPER_LEFT;
-    let size = Lcd::SIZE / 4;
-
-    lcd.fill(pos, size, color!(#0000FF)).unwrap();
-
     info!("Embassy initialized!");
 
     // TODO: Spawn some tasks
@@ -96,19 +81,19 @@ async fn main(spawner: Spawner) -> ! {
     loop {
         Timer::after(Duration::from_secs(1)).await;
         let pos = Position2::<Valid>::UPPER_LEFT;
-        let size = Lcd::SIZE / 4;
+        let size = Lcd::SIZE;
 
         lcd.fill(pos, size, color!(#FF00FF)).unwrap();
 
         Timer::after(Duration::from_secs(1)).await;
         let pos = Position2::<Valid>::UPPER_LEFT;
-        let size = Lcd::SIZE / 4;
+        let size = Lcd::SIZE;
 
         lcd.fill(pos, size, color!(#0000FF)).unwrap();
 
         Timer::after(Duration::from_secs(1)).await;
         let pos = Position2::<Valid>::UPPER_LEFT;
-        let size = Lcd::SIZE / 4;
+        let size = Lcd::SIZE;
 
         lcd.fill(pos, size, color!(#000000)).unwrap();
     }
