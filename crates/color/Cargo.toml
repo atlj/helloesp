@@ -3,3 +3,9 @@ name = "color"
 edition.workspace = true
 rust-version.workspace = true
 version.workspace = true
+
+[lib]
+proc-macro = true
+
+[dependencies]
+color_core = { path = "../color-core" }

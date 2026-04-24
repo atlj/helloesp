@@ -1,8 +1,8 @@
 [workspace]
 members = [
   "crates/app",
+  "crates/color-core",
   "crates/color",
-  "crates/color-macros",
   "crates/graphics",
   "crates/hardware",
 ]
