@@ -8,19 +8,19 @@ use crate::{
     },
 };
 
-pub struct DrawCommand<'a, Validity> {
+pub struct DrawCommand<Validity, I: Iterator<Item = Color>> {
     pub at: Position2<Validity>,
     pub size: Size2<Validity>,
-    pub color_data: &'a mut dyn Iterator<Item = Color>,
+    pub color_data: I,
     validity: PhantomData<Validity>,
 }
 
-impl<'a, T> DrawCommand<'a, T> {
+impl<I: Iterator<Item = Color>> DrawCommand<Unchecked, I> {
     pub fn new(
         at: Position2<Unchecked>,
         size: Size2<Unchecked>,
-        color_data: &'a mut dyn Iterator<Item = Color>,
-    ) -> DrawCommand<'a, Unchecked> {
+        color_data: I,
+    ) -> DrawCommand<Unchecked, I> {
         DrawCommand {
             at,
             size,
@@ -38,7 +38,7 @@ pub trait Screen {
 
     fn get_brightness(&self) -> u8;
 
-    fn draw(&mut self, command: DrawCommand<Valid>) -> Result<(), Self::Error>;
+    fn draw<I: Iterator<Item = Color>>(&mut self, command: DrawCommand<Valid, I>) -> Result<(), Self::Error>;
 
     fn fill(
         &mut self,
@@ -47,26 +47,26 @@ pub trait Screen {
         color: Color,
     ) -> Result<(), Self::Error> {
         let pixel_count = usize::from(size.width) * usize::from(size.height);
-        let mut iter = (0..pixel_count).map(|_| color);
+        let iter = (0..pixel_count).map(|_| color);
 
         let command = DrawCommand {
             at,
             size,
-            color_data: &mut iter,
+            color_data: iter,
             validity: PhantomData,
         };
 
         self.draw(command)
     }
 
-    fn validate_draw_command(
+    fn validate_draw_command<I: Iterator<Item = Color>>(
         DrawCommand {
             at,
             size,
             color_data,
             ..
-        }: DrawCommand<Unchecked>,
-    ) -> Option<DrawCommand<Valid>> {
+        }: DrawCommand<Unchecked, I>,
+    ) -> Option<DrawCommand<Valid, I>> {
         let at = Self::validate_position(at)?;
         let size = Self::validate_size(&at, size)?;
 

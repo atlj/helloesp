@@ -1,0 +1,11 @@
+[package]
+name = "color_macros"
+edition.workspace = true
+rust-version.workspace = true
+version.workspace = true
+
+[lib]
+proc-macro = true
+
+[dependencies]
+color = { path = "../color" }

@@ -103,6 +103,13 @@ name = "color"
 version = "0.1.0"
 
 [[package]]
+name = "color_macros"
+version = "0.1.0"
+dependencies = [
+ "color",
+]
+
+[[package]]
 name = "const-default"
 version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"

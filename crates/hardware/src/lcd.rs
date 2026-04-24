@@ -17,7 +17,7 @@ use esp_hal::spi::master::Spi;
 use esp_hal::time::Rate;
 use graphics::geometry::Size2;
 use graphics::geometry::validity::{Unchecked, Valid};
-use graphics::{DrawCommand, Screen};
+use graphics::{Color, DrawCommand, Screen};
 use static_cell::StaticCell;
 use thiserror::Error as ThisError;
 
@@ -112,11 +112,11 @@ impl Screen for Lcd {
         self.brightness
     }
 
-    fn draw(&mut self, command: DrawCommand<Valid>) -> Result<(), Self::Error> {
+    fn draw<I: Iterator<Item = Color>>(&mut self, command: DrawCommand<Valid, I>) -> Result<(), Self::Error> {
         let DrawCommand {
             at,
             size,
-            color_data,
+            mut color_data,
             ..
         } = command;
 
