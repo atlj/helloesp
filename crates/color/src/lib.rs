@@ -1,15 +1,12 @@
-#![feature(proc_macro_totokens)]
-
-use proc_macro::{ToTokens, TokenStream};
+use proc_macro::TokenStream;
 
 #[proc_macro]
 pub fn color(input: TokenStream) -> TokenStream {
-    dbg!(&input);
     let mut iter = input.into_iter();
     match iter.next() {
         Some(token) => match token {
             proc_macro::TokenTree::Punct(punct) if punct.as_char() == '#' => {}
-            _ => panic!("color literal needs to start with #"),
+            _ => panic!("color needs to start with #"),
         },
         None => panic!("needs a color literal"),
     };
@@ -29,13 +26,12 @@ pub fn color(input: TokenStream) -> TokenStream {
 
     let mut chars = hex_str.chars();
 
-    let r = hex_pair_to_number(chars.next().unwrap(), chars.next().unwrap());
-    let g = hex_pair_to_number(chars.next().unwrap(), chars.next().unwrap());
     let b = hex_pair_to_number(chars.next().unwrap(), chars.next().unwrap());
+    let g = hex_pair_to_number(chars.next().unwrap(), chars.next().unwrap());
+    let r = hex_pair_to_number(chars.next().unwrap(), chars.next().unwrap());
 
     let result = format!("color_core::Color {{ r: {}, g: {}, b: {} }}", r, g, b);
-    dbg!(&result);
-    result.into_token_stream()
+    result.parse().unwrap()
 }
 
 fn hex_pair_to_number(high: char, low: char) -> u8 {

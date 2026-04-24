@@ -7,7 +7,7 @@
 )]
 #![deny(clippy::large_stack_frames)]
 
-use color::Color;
+use color::color;
 use embassy_executor::Spawner;
 use embassy_time::{Duration, Timer};
 use esp_backtrace as _;
@@ -71,22 +71,22 @@ async fn main(spawner: Spawner) -> ! {
     let pos = Position2::<Valid>::UPPER_LEFT;
     let size = Lcd::SIZE;
 
-    lcd.fill(pos, size, Color(1984)).unwrap();
+    lcd.fill(pos, size, color!(#FFFFFF)).unwrap();
 
     let pos = Position2::<Valid>::UPPER_LEFT;
     let size = Lcd::SIZE / 2;
 
-    lcd.fill(pos, size, Color(u16::MAX)).unwrap();
+    lcd.fill(pos, size, color!(#FF0000)).unwrap();
 
     let pos = Position2::<Valid>::UPPER_LEFT;
     let size = Lcd::SIZE / 3;
 
-    lcd.fill(pos, size, Color(0)).unwrap();
+    lcd.fill(pos, size, color!(#00FF00)).unwrap();
 
     let pos = Position2::<Valid>::UPPER_LEFT;
     let size = Lcd::SIZE / 4;
 
-    lcd.fill(pos, size, Color(6767)).unwrap();
+    lcd.fill(pos, size, color!(#0000FF)).unwrap();
 
     info!("Embassy initialized!");
 
@@ -94,8 +94,23 @@ async fn main(spawner: Spawner) -> ! {
     let _ = spawner;
 
     loop {
-        info!("Hello world!");
         Timer::after(Duration::from_secs(1)).await;
+        let pos = Position2::<Valid>::UPPER_LEFT;
+        let size = Lcd::SIZE / 4;
+
+        lcd.fill(pos, size, color!(#FF00FF)).unwrap();
+
+        Timer::after(Duration::from_secs(1)).await;
+        let pos = Position2::<Valid>::UPPER_LEFT;
+        let size = Lcd::SIZE / 4;
+
+        lcd.fill(pos, size, color!(#0000FF)).unwrap();
+
+        Timer::after(Duration::from_secs(1)).await;
+        let pos = Position2::<Valid>::UPPER_LEFT;
+        let size = Lcd::SIZE / 4;
+
+        lcd.fill(pos, size, color!(#000000)).unwrap();
     }
 
     // for inspiration have a look at the examples at https://github.com/esp-rs/esp-hal/tree/esp-hal-v1.0.0/examples

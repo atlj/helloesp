@@ -16,6 +16,7 @@ version = "0.1.0"
 [workspace.dependencies]
 byte-slice-cast = { version = "1.2.3", default-features = false }
 color = { path = "crates/color" }
+color_core = { path = "crates/color-core" }
 critical-section = "1.2.0"
 embassy-executor = { version = "0.9.1", features = ["log"] }
 embassy-time = { version = "0.5.0", features = ["log"] }

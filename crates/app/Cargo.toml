@@ -11,6 +11,7 @@ path = "src/main.rs"
 
 [dependencies]
 color.workspace = true
+color_core.workspace = true
 critical-section.workspace = true
 embassy-executor.workspace = true
 embassy-time.workspace = true

@@ -12,3 +12,4 @@ graphics.workspace = true
 log.workspace = true
 static_cell.workspace = true
 thiserror.workspace = true
+color_core.workspace = true

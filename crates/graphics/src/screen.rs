@@ -1,11 +1,10 @@
 use core::marker::PhantomData;
 
-use crate::{
-    Color,
-    geometry::{
-        Position2, Size2,
-        validity::{Unchecked, Valid},
-    },
+use color_core::Color;
+
+use crate::geometry::{
+    Position2, Size2,
+    validity::{Unchecked, Valid},
 };
 
 pub struct DrawCommand<Validity, I: Iterator<Item = Color>> {
@@ -38,7 +37,10 @@ pub trait Screen {
 
     fn get_brightness(&self) -> u8;
 
-    fn draw<I: Iterator<Item = Color>>(&mut self, command: DrawCommand<Valid, I>) -> Result<(), Self::Error>;
+    fn draw<I: Iterator<Item = Color>>(
+        &mut self,
+        command: DrawCommand<Valid, I>,
+    ) -> Result<(), Self::Error>;
 
     fn fill(
         &mut self,

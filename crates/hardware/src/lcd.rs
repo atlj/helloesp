@@ -4,7 +4,7 @@
 //! and backlight setup described in `docs/hardware-slop.md` and exposes a small
 //! API for panel init, brightness control, and simple solid-color drawing.
 
-use byte_slice_cast::AsByteSlice;
+use color_core::Color;
 use embassy_time::{Duration, Timer};
 use esp_hal::Blocking;
 use esp_hal::gpio::{DriveMode, Level, Output, OutputConfig};
@@ -17,7 +17,7 @@ use esp_hal::spi::master::Spi;
 use esp_hal::time::Rate;
 use graphics::geometry::Size2;
 use graphics::geometry::validity::{Unchecked, Valid};
-use graphics::{Color, DrawCommand, Screen};
+use graphics::{DrawCommand, Screen};
 use static_cell::StaticCell;
 use thiserror::Error as ThisError;
 
@@ -38,6 +38,7 @@ mod command {
 }
 
 const COLMOD_RGB565: u8 = 0x55;
+const COLMOD_RGB888: u8 = 0x67;
 const MADCTL_WIDE_INVERTED_RGB: u8 = 0xE0;
 
 const POSITIVE_GAMMA: [u8; 14] = [
@@ -112,7 +113,10 @@ impl Screen for Lcd {
         self.brightness
     }
 
-    fn draw<I: Iterator<Item = Color>>(&mut self, command: DrawCommand<Valid, I>) -> Result<(), Self::Error> {
+    fn draw<I: Iterator<Item = Color>>(
+        &mut self,
+        command: DrawCommand<Valid, I>,
+    ) -> Result<(), Self::Error> {
         let DrawCommand {
             at,
             size,
@@ -130,15 +134,15 @@ impl Screen for Lcd {
         self.dc.set_high();
 
         let mut remaining = usize::from(size.width) * usize::from(size.height);
-        let mut sink = [0u16; 8192];
+        let mut sink = [0u8; 66_000]; // 300 pixels × 3 bytes (RGB888)
         let mut did_log_underflow = false;
 
         while remaining > 0 {
-            let chunk_len = sink.len().min(remaining);
+            let chunk_len = (sink.len() / 3).min(remaining);
 
-            for item in sink.iter_mut().take(chunk_len) {
-                *item = match color_data.next() {
-                    Some(color) => color.0,
+            for slot in sink[..chunk_len * 3].chunks_mut(3) {
+                let (r, g, b) = match color_data.next() {
+                    Some(color) => (color.r, color.g, color.b),
                     None => {
                         if !did_log_underflow {
                             log::error!(
@@ -147,12 +151,15 @@ impl Screen for Lcd {
                             did_log_underflow = true;
                         }
 
-                        0
+                        (0, 0, 0)
                     }
                 };
+                slot[0] = r;
+                slot[1] = g;
+                slot[2] = b;
             }
 
-            self.spi.write(sink[..chunk_len].as_byte_slice())?;
+            self.spi.write(&sink[..chunk_len * 3])?;
             remaining -= chunk_len;
         }
 
@@ -211,7 +218,7 @@ impl Lcd {
 
         self.write_command(command::CSCON, Some(&[0xC3]))?;
         self.write_command(command::CSCON, Some(&[0x96]))?;
-        self.write_command(command::COLMOD, Some(&[COLMOD_RGB565]))?;
+        self.write_command(command::COLMOD, Some(&[COLMOD_RGB888]))?;
         self.write_command(command::MADCTL, Some(&[MADCTL_WIDE_INVERTED_RGB]))?;
         self.write_command(command::PGC, Some(&POSITIVE_GAMMA))?;
         self.write_command(command::NGC, Some(&NEGATIVE_GAMMA))?;
