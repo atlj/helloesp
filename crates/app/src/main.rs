@@ -66,7 +66,7 @@ async fn main(spawner: Spawner) -> ! {
     esp_rtos::start(timg0.timer0);
 
     lcd.init().await.unwrap();
-    lcd.set_brightness(100);
+    lcd.set_brightness(255);
 
     // let pos = Position2::UPPER_LEFT;
     // let size = Lcd::SIZE;
@@ -81,9 +81,9 @@ async fn main(spawner: Spawner) -> ! {
     let color_data = (0..320)
         .map(move |row| {
             (0..480).map(move |col| {
-                let red = 0;
+                let red = ((row as f32 * u8::MAX as f32) / (320.0)) as u8;
                 let green = ((col as f32 * u8::MAX as f32) / (480.0)) as u8;
-                let blue = 0;
+                let blue = 128;
 
                 Color::new(red, green, blue)
             })
