@@ -9,7 +9,7 @@ pub struct Position2<Validity> {
     validity: PhantomData<Validity>,
 }
 
-impl<T> Position2<T> {
+impl Position2<Unchecked> {
     pub const UPPER_LEFT: Position2<Valid> = Position2 {
         x: 0,
         y: 0,
@@ -23,9 +23,7 @@ impl<T> Position2<T> {
             validity: PhantomData,
         }
     }
-}
 
-impl Position2<Unchecked> {
     /// Converts to `Valid` without checking bounds.
     ///
     /// # Safety
@@ -61,14 +59,6 @@ impl<T> Div<u8> for Size2<T> {
 }
 
 impl<T> Size2<T> {
-    pub const fn new(width: u16, height: u16) -> Size2<Unchecked> {
-        Size2 {
-            width,
-            height,
-            validity: PhantomData,
-        }
-    }
-
     pub const fn center_position(&self) -> Position2<T> {
         let x = self.width / 2;
         let y = self.height / 2;
@@ -82,6 +72,14 @@ impl<T> Size2<T> {
 }
 
 impl Size2<Unchecked> {
+    pub const fn new(width: u16, height: u16) -> Size2<Unchecked> {
+        Size2 {
+            width,
+            height,
+            validity: PhantomData,
+        }
+    }
+
     /// Converts to `Valid` without checking bounds.
     ///
     /// # Safety
