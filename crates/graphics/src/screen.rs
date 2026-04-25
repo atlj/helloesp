@@ -2,9 +2,12 @@ use core::marker::PhantomData;
 
 use color_core::Color;
 
-use crate::geometry::{
-    Position2, Size2,
-    validity::{Unchecked, Valid},
+use crate::{
+    geometry::{
+        Position2, Size2,
+        validity::{Unchecked, Valid},
+    },
+    shape::Shape,
 };
 
 pub struct DrawCommand<Validity, I: Iterator<Item = Color>> {
@@ -27,6 +30,15 @@ impl<I: Iterator<Item = Color>> DrawCommand<Unchecked, I> {
             validity: PhantomData,
         }
     }
+
+    pub(crate) fn unchecked_validate(self) -> DrawCommand<Valid, I> {
+        DrawCommand {
+            at: self.at.unchecked_validate(),
+            size: self.size.unchecked_validate(),
+            color_data: self.color_data,
+            validity: PhantomData,
+        }
+    }
 }
 
 pub trait Screen {
@@ -41,6 +53,14 @@ pub trait Screen {
         &mut self,
         command: DrawCommand<Valid, I>,
     ) -> Result<(), Self::Error>;
+
+    fn draw_shape<S: Shape<Valid>>(&mut self, shape: S) -> Result<(), Self::Error> {
+        for command in shape.to_draw_commands() {
+            self.draw(command)?;
+        }
+
+        Ok(())
+    }
 
     fn fill(
         &mut self,

@@ -94,8 +94,8 @@ impl Size2<Unchecked> {
 }
 
 pub mod validity {
-    #[derive(Debug)]
+    #[derive(Debug, Clone)]
     pub struct Valid;
-    #[derive(Debug)]
+    #[derive(Debug, Clone)]
     pub struct Unchecked;
 }

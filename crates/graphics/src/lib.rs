@@ -4,5 +4,6 @@
 
 pub mod geometry;
 mod screen;
+pub mod shape;
 
 pub use screen::{DrawCommand, Screen};
