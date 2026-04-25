@@ -37,9 +37,8 @@ mod command {
     pub const CSCON: u8 = 0xF0;
 }
 
-// const COLMOD_RGB565: u8 = 0x55;
-const COLMOD_RGB888: u8 = 0x67;
-const MADCTL_WIDE_INVERTED_RGB: u8 = 0xE0;
+const COLMOD_RGB565: u8 = 0x55;
+const MADCTL_WIDE_INVERTED_BGR: u8 = 0xE8; // MY|MX|MV|BGR
 
 const POSITIVE_GAMMA: [u8; 14] = [
     0xF0, 0x09, 0x0B, 0x06, 0x04, 0x15, 0x2F, 0x54, 0x42, 0x3C, 0x17, 0x14, 0x18, 0x1B,
@@ -138,11 +137,11 @@ impl Screen for Lcd {
         let mut did_log_underflow = false;
 
         while remaining > 0 {
-            let chunk_len = (sink.len() / 3).min(remaining);
+            let chunk_len = (sink.len() / 2).min(remaining);
 
-            for slot in sink[..chunk_len * 3].chunks_mut(3) {
-                let (r, g, b) = match color_data.next() {
-                    Some(color) => (color.r, color.g, color.b),
+            for slot in sink[..chunk_len * 2].chunks_mut(2) {
+                let pixel = match color_data.next() {
+                    Some(color) => color.0,
                     None => {
                         if !did_log_underflow {
                             log::error!(
@@ -150,16 +149,15 @@ impl Screen for Lcd {
                             );
                             did_log_underflow = true;
                         }
-
-                        (0, 0, 0)
+                        0
                     }
                 };
-                slot[0] = r;
-                slot[1] = g;
-                slot[2] = b;
+                let [hi, lo] = pixel.to_be_bytes();
+                slot[0] = hi;
+                slot[1] = lo;
             }
 
-            self.spi.write(&sink[..chunk_len * 3])?;
+            self.spi.write(&sink[..chunk_len * 2])?;
             remaining -= chunk_len;
         }
 
@@ -218,8 +216,8 @@ impl Lcd {
 
         self.write_command(command::CSCON, Some(&[0xC3]))?;
         self.write_command(command::CSCON, Some(&[0x96]))?;
-        self.write_command(command::COLMOD, Some(&[COLMOD_RGB888]))?;
-        self.write_command(command::MADCTL, Some(&[MADCTL_WIDE_INVERTED_RGB]))?;
+        self.write_command(command::COLMOD, Some(&[COLMOD_RGB565]))?;
+        self.write_command(command::MADCTL, Some(&[MADCTL_WIDE_INVERTED_BGR]))?;
         self.write_command(command::PGC, Some(&POSITIVE_GAMMA))?;
         self.write_command(command::NGC, Some(&NEGATIVE_GAMMA))?;
         self.write_command(command::CSCON, Some(&[0x3C]))?;

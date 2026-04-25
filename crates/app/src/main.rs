@@ -44,7 +44,7 @@ async fn main(spawner: Spawner) -> ! {
     let spi_config = Config::default()
         .with_mode(Mode::_0)
         .with_write_bit_order(esp_hal::spi::BitOrder::MsbFirst)
-        .with_frequency(Rate::from_hz(80_000_000));
+        .with_frequency(Rate::from_mhz(80));
     let screen_spi = esp_hal::spi::master::Spi::new(peripherals.SPI2, spi_config)
         .unwrap()
         .with_mosi(peripherals.GPIO13)
@@ -83,19 +83,19 @@ async fn main(spawner: Spawner) -> ! {
         let pos = Position2::<Valid>::UPPER_LEFT;
         let size = Lcd::SIZE;
 
-        lcd.fill(pos, size, color!(#FF00FF)).unwrap();
+        lcd.fill(pos, size, color!(#FF0000)).unwrap();
+
+        Timer::after(Duration::from_secs(1)).await;
+        let pos = Position2::<Valid>::UPPER_LEFT;
+        let size = Lcd::SIZE;
+
+        lcd.fill(pos, size, color!(#00FF00)).unwrap();
 
         Timer::after(Duration::from_secs(1)).await;
         let pos = Position2::<Valid>::UPPER_LEFT;
         let size = Lcd::SIZE;
 
         lcd.fill(pos, size, color!(#0000FF)).unwrap();
-
-        Timer::after(Duration::from_secs(1)).await;
-        let pos = Position2::<Valid>::UPPER_LEFT;
-        let size = Lcd::SIZE;
-
-        lcd.fill(pos, size, color!(#000000)).unwrap();
     }
 
     // for inspiration have a look at the examples at https://github.com/esp-rs/esp-hal/tree/esp-hal-v1.0.0/examples

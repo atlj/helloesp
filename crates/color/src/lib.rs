@@ -26,12 +26,17 @@ pub fn color(input: TokenStream) -> TokenStream {
 
     let mut chars = hex_str.chars();
 
-    let b = hex_pair_to_number(chars.next().unwrap(), chars.next().unwrap());
-    let g = hex_pair_to_number(chars.next().unwrap(), chars.next().unwrap());
-    let r = hex_pair_to_number(chars.next().unwrap(), chars.next().unwrap());
+    let r8 = hex_pair_to_number(chars.next().unwrap(), chars.next().unwrap());
+    let g8 = hex_pair_to_number(chars.next().unwrap(), chars.next().unwrap());
+    let b8 = hex_pair_to_number(chars.next().unwrap(), chars.next().unwrap());
 
-    let result = format!("color_core::Color {{ r: {}, g: {}, b: {} }}", r, g, b);
-    result.parse().unwrap()
+    let r5 = (r8 as f64 * 31.0 / 255.0).round() as u16;
+    let g6 = (g8 as f64 * 63.0 / 255.0).round() as u16;
+    let b5 = (b8 as f64 * 31.0 / 255.0).round() as u16;
+
+    let rgb565: u16 = (r5 << 11) | (g6 << 5) | b5;
+
+    format!("color_core::Color({rgb565}_u16)").parse().unwrap()
 }
 
 fn hex_pair_to_number(high: char, low: char) -> u8 {
