@@ -17,7 +17,6 @@ use esp_hal::spi::Mode;
 use esp_hal::spi::master::Config;
 use esp_hal::time::Rate;
 use esp_hal::timer::timg::TimerGroup;
-use graphics::geometry::validity::Valid;
 use graphics::geometry::{Position2, Size2};
 use graphics::{DrawCommand, Screen};
 use hardware::lcd::Lcd;
@@ -69,10 +68,10 @@ async fn main(spawner: Spawner) -> ! {
     lcd.init().await.unwrap();
     lcd.set_brightness(100);
 
-    let pos = Position2::UPPER_LEFT;
-    let size = Lcd::SIZE;
-
-    lcd.fill(pos, size, color!(#FFFFFF)).unwrap();
+    // let pos = Position2::UPPER_LEFT;
+    // let size = Lcd::SIZE;
+    //
+    // lcd.fill(pos, size, color!(#FF0000)).unwrap();
 
     info!("Embassy initialized!");
 
@@ -82,11 +81,11 @@ async fn main(spawner: Spawner) -> ! {
     let color_data = (0..320)
         .map(move |row| {
             (0..480).map(move |col| {
-                let red = ((row as f32 * u8::MAX as f32) / (320.0)) as u8;
+                let red = 0;
                 let green = ((col as f32 * u8::MAX as f32) / (480.0)) as u8;
                 let blue = 0;
 
-                Color::from_rgb(red, green, blue)
+                Color::new(red, green, blue)
             })
         })
         .flatten();
